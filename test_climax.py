@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import argparse
 try:
     from StringIO import StringIO
