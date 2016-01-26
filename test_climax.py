@@ -249,6 +249,17 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stdout.getvalue(), '123\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
+    @mock.patch('climax.getpass.getpass', return_value='secret')
+    def test_password_prompt(self, getpass):
+        @climax.command()
+        @climax.argument('--password', action=climax.PasswordPrompt)
+        def pw(password):
+            print(password)
+
+        pw(['--password'])
+        self.assertEqual(self.stdout.getvalue(), 'secret\n')
+        self.assertEqual(self.stderr.getvalue(), '')
+
 
 if __name__ == '__main__':
     unittest.main()

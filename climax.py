@@ -1,6 +1,7 @@
 import argparse
 from functools import wraps
 from functools import partial
+import getpass
 
 
 class _CopiedArgumentParser(argparse.ArgumentParser):
@@ -13,6 +14,15 @@ class _CopiedArgumentParser(argparse.ArgumentParser):
         super(_CopiedArgumentParser, self).__init__(*args, **kwargs)
         for k, v in vars(parser).items():
             setattr(self, k, v)
+
+
+class PasswordPrompt(argparse.Action):
+    def __init__(self, *args, **kwargs):
+        kwargs['nargs'] = 0
+        super(PasswordPrompt, self).__init__(*args, **kwargs)
+
+    def __call__(self, parser, namespace, values, option_string):
+        setattr(namespace, self.dest, getpass.getpass())
 
 
 def command(*args, **kwargs):

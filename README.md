@@ -23,8 +23,8 @@ The following example should give you a pretty good idea of how climax works:
     import climax
 
     @climax.command()
-    @climax.argument('--count', type=int, help="how many times to repeat")
-    @climax.argument('name', help="the name to repeat")
+    @climax.argument('--count', type=int, help='how many times to repeat')
+    @climax.argument('name', help='the name to repeat')
     def repeat(count, name):
         """This silly program repeats a name the given number of times."""
         for i in range(count):
@@ -147,6 +147,31 @@ and optional arguments are considered arguments. In climax, the
 `@climax.argument` and `@climax.option` decorators are equivalent, so they can
 be used according to your preference.
 
+### Password Prompts
+
+Argparse does not provide any facility to enter passwords securely. Since this
+is a common need of scripts, climax includes a custom argparse action that
+adds this functionality.
+
+    import climax
+
+    @climax.command()
+    @climax.argument('--username', '-u', help='your username')
+    @climax.argument('--password', '-p', action=climax.PasswordPrompt,
+                     help='prompt for your password')
+    def login(username, password):
+        """Login example."""
+        print(username, password)
+
+    if __name__ == '__main__':
+        login()
+
+When you run this script, the `getpass` function from the Python standard
+library is invoked to prompt for the password without echoing what you type:
+
+    $ python login.py -u john -p
+    Password:
+
 ### Contexts
 
 In the command group example above, there is a function associated with the
@@ -188,8 +213,8 @@ A command function can also return a value, which is returned to the caller.
     import climax
 
     @climax.command()
-    @climax.argument('--count', type=int, help="how many times to repeat")
-    @climax.argument('name', help="the name to repeat")
+    @climax.argument('--count', type=int, help='how many times to repeat')
+    @climax.argument('name', help='the name to repeat')
     def repeat(count, name):
         """This silly program repeats a name the given number of times."""
         for i in range(count):
