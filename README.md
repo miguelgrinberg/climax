@@ -10,6 +10,12 @@ import native argparse parsers as sub-commands, and can also export itself as
 a native parser, providing full interoperability with existing argparse
 based solutions.
 
+## Installation
+
+Climax is installed with pip:
+
+    $ pip install climax
+
 ## Getting Started
 
 The following example should give you a pretty good idea of how climax works:
@@ -197,13 +203,15 @@ A command function can also return a value, which is returned to the caller.
 ### Optional Commands
 
 In Python 3.2 and older, argparse requires that a command name is specified
-when using groups. Due to a bug, argparse versions that ship with Python 3.3
-and newer lift that requirement, making it possible to specify a command line
-in which no command from the group is selected.
+when using groups. But argparse versions that ship with Python 3.3 and newer
+lift that requirement due to a bug that inadvertently slipped. This makes it
+possible to specify a command line in which no command from the group is
+selected, something that can sometimes be useful.
 
-If you are using a newer Python version, climax makes group commands required,
-like in the older Python releases. To make commands in a group optional, the
-group can be given the `required=False` argument:
+If you are using one of the newer Python versions, climax makes group commands
+required by default, like in the older Python releases. This gives a
+consistent behavior. To make commands in a group optional, the group can be
+given the `required=False` argument:
 
     import climax
 
@@ -215,17 +223,22 @@ group can be given the `required=False` argument:
     def cmd()
         print('this is cmd')
 
-With this example, the following command is valid:
+With this example, the following two commands are both valid:
+
+    $ python main.py cmd
+    this is main
+    this is cmd
 
     $ python main.py
     this is main
 
+Without setting `required=False`, the second command would return an error.
 Note that optional commands do not work in Python releases before 3.3.
 
 ### Recursive Groups
 
 Argparse supports multiple levels of commands and sub-commands. In climax,
-multiple levels of groups can be built using the familiar decorator syntax.
+multiple layers of commands can be built using the familiar decorator syntax.
 Consider the following example:
 
     @climax.group()
@@ -252,7 +265,7 @@ Consider the following example:
 
 Climax's use of argparse is not magical. In fact, it is possible to attach a
 regular argparse parser as a command in a climax group, by passing a `parser`
-argument to the group decorator:
+argument to the `@command` decorator:
 
     @climax.group()
     def grp():
