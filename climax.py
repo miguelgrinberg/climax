@@ -11,8 +11,8 @@ class _CopiedArgumentParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
         parser = kwargs.pop('parser')
         super(_CopiedArgumentParser, self).__init__(*args, **kwargs)
-        for k,v in vars(parser).items():
-            setattr(self,k,v)
+        for k, v in vars(parser).items():
+            setattr(self, k, v)
 
 
 def command(*args, **kwargs):
@@ -27,6 +27,7 @@ def command(*args, **kwargs):
         if 'description' not in kwargs:
             kwargs['description'] = f.__doc__
         f.parser = argparse.ArgumentParser(*args, **kwargs)
+        f.climax = True
         for arg in getattr(f, '_arguments', []):
             f.parser.add_argument(*arg[0], **arg[1])
 
@@ -34,11 +35,13 @@ def command(*args, **kwargs):
         def wrapper(args=None):
             kwargs = f.parser.parse_args(args)
             return f(**vars(kwargs))
+
+        wrapper.func = f
         return wrapper
     return decorator
 
 
-def _subcommand(group=None, *args, **kwargs):
+def _subcommand(group, *args, **kwargs):
     """Decorator to define a subcommand.
 
     This decorator is used for the group's @command decorator.
@@ -50,11 +53,39 @@ def _subcommand(group=None, *args, **kwargs):
         if 'parser' in kwargs:
             # use a copy of the given parser
             group._subparsers._parser_class = _CopiedArgumentParser
-        f.parser = group._subparsers.add_parser(*args, **kwargs)
+        if args == ():
+            f.parser = group._subparsers.add_parser(f.__name__, **kwargs)
+        else:
+            f.parser = group._subparsers.add_parser(*args, **kwargs)
+        f.parser.set_defaults(**{'_func_' + group.__name__: f})
+        f.climax = 'parser' not in kwargs
         group._subparsers._parser_class = _parser_class
-        f.parser.set_defaults(_func=f)
         for arg in getattr(f, '_arguments', []):
             f.parser.add_argument(*arg[0], **arg[1])
+        return f
+    return decorator
+
+
+def _subgroup(group, *args, **kwargs):
+    """Decorator to define a subgroup.
+
+    This decorator is used for the group's @group decorator.
+    """
+    def decorator(f):
+        f.required = kwargs.pop('required', True)
+        if 'help' not in kwargs:
+            kwargs['help'] = f.__doc__
+        if args == ():
+            f.parser = group._subparsers.add_parser(f.__name__, **kwargs)
+        else:
+            f.parser = group._subparsers.add_parser(*args, **kwargs)
+        f.parser.set_defaults(**{'_func_' + group.__name__: f})
+        f.climax = True
+        for arg in getattr(f, '_arguments', []):
+            f.parser.add_argument(*arg[0], **arg[1])
+        f._subparsers = f.parser.add_subparsers()
+        f.command = partial(_subcommand, f)
+        f.group = partial(_subgroup, f)
         return f
     return decorator
 
@@ -68,37 +99,54 @@ def group(*args, **kwargs):
     object constructor.
     """
     def decorator(f):
+        f.required = kwargs.pop('required', True)
         f.parser = argparse.ArgumentParser(*args, **kwargs)
+        f.climax = True
         for arg in getattr(f, '_arguments', []):
             f.parser.add_argument(*arg[0], **arg[1])
         f._subparsers = f.parser.add_subparsers()
         f.command = partial(_subcommand, f)
+        f.group = partial(_subgroup, f)
 
         @wraps(f)
         def wrapper(args=None):
             parsed_args = vars(f.parser.parse_args(args))
 
-            # call the group function
-            filtered_args = {arg: parsed_args[arg] for arg in f._argnames
-                             if arg in parsed_args}
-            f(**filtered_args)
+            # in Python 3.3+, sub-commands are optional by default
+            # so required parsers need to be validated by hand here by
+            func = f
+            while '_func_' + func.__name__ in parsed_args:
+                func = parsed_args.get('_func_' + func.__name__)
+            if getattr(func, 'required', False):
+                f.parser.error('too few arguments')
 
-            # call the sub-command function
-            _func = parsed_args.pop('_func')
-            try:
-                # try with all the arguments first
-                _func(**parsed_args)
-            except TypeError:
-                # else send only the sub-command arguments if they are known
-                if not isinstance(_func.parser, _CopiedArgumentParser):
+            # call the group function
+            filtered_args = {arg: parsed_args[arg]
+                             for arg in parsed_args.keys()
+                             if arg in getattr(f, '_argnames', [])}
+            parsed_args = {arg: parsed_args[arg] for arg in parsed_args.keys()
+                           if arg not in filtered_args}
+            ctx = f(**filtered_args)
+
+            # call the sub-command function (or chain)
+            func = f
+            while '_func_' + func.__name__ in parsed_args:
+                func = parsed_args.pop('_func_' + func.__name__)
+                if getattr(func, 'climax', False):
                     filtered_args = {arg: parsed_args[arg]
-                                     for arg in getattr(_func, '_argnames', [])
-                                     if arg in parsed_args}
-                    _func(**filtered_args)
+                                     for arg in parsed_args.keys()
+                                     if arg in getattr(func, '_argnames', [])}
+                    parsed_args = {arg: parsed_args[arg]
+                                   for arg in parsed_args.keys()
+                                   if arg not in filtered_args}
                 else:
-                    # we don't know the list of arguments for this parser,
-                    # probably because it is an external one
-                    raise
+                    # we don't have our metadata for this subparser, so we
+                    # send all remaining args to it
+                    filtered_args = parsed_args
+                    parsed_args = {}
+                filtered_args.update(ctx or {})
+                ctx = func(**filtered_args)
+            return ctx
         return wrapper
     return decorator
 
