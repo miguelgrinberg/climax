@@ -201,9 +201,9 @@ when using groups. Due to a bug, argparse versions that ship with Python 3.3
 and newer lift that requirement, making it possible to specify a command line
 in which no command from the group is selected.
 
-If you are using Python 3.2, climax makes group commands required, like in the
-older Python releases. To make commands in a group optional, the group can
-be given the `required=False` argument:
+If you are using a newer Python version, climax makes group commands required,
+like in the older Python releases. To make commands in a group optional, the
+group can be given the `required=False` argument:
 
     import climax
 
@@ -233,22 +233,22 @@ Consider the following example:
         pass
 
     @main.group()
-    def level2a():
+    def sub1():
         pass
 
-    @level2.command()
-    def cmd1():
+    @sub1.command()
+    def sub1a():
         pass
 
-    @level2.command()
-    def l2cmd2():
+    @sub1.command()
+    def sub1b():
         pass
 
     @main.command()
-    def level2b():
+    def sub2():
         pass
 
-### Integration with argparse parsers
+### Integration with native argparse parsers
 
 Climax's use of argparse is not magical. In fact, it is possible to attach a
 regular argparse parser as a command in a climax group, by passing a `parser`
@@ -274,5 +274,6 @@ returns a fully built and ready to use parser.
 
 ## Advanced Features
 
-Sorry to dissappoint you, but that's it. The goal of climax is to be simple
-and lightweight, there are no advanced features. :) 
+Sorry to dissappoint you, but you now know everthing there is to know about
+climax. The goal of this project is to be simple and lightweight, there are
+no advanced features. :) 
