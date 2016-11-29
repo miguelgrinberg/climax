@@ -225,6 +225,44 @@ A command function can also return a value, which is returned to the caller.
         result = main()
         # result now has the return value from the command
 
+### Parents
+
+Argparse supports the concept of "parents", which allows a command to inherit
+arguments from another command, which is designated as a parent. The purpose
+of this feature is to avoid duplication when a common set of arguments needs
+to be applied to several commands.
+
+With climax, the parent feature is available through a `parent` decorator:
+
+    import climax
+
+    @climax.parent()
+    @climax.argument('--count', type=int, help='how many times to repeat')
+    def repeat()
+        pass
+
+    @climax.group()
+    def main():
+        pass
+
+    @main.command(parents=[repeat])
+    def foo(count):
+        for i in range(count):
+            print('foo')
+
+    @main.command(parents=[repeat])
+    @climax.argument('name', help='the name to repeat')
+    def bar(name, count):
+        for i in range(count):
+            print(name)
+
+    if __name__ == '__main__':
+        main()
+
+In this example, both the `foo` and `bar` commands accept `--count` as
+argument. The function that handles a command that has parents will receive 
+its own arguments combined with those of the parents.
+
 ### Optional Commands
 
 In Python 3.2 and older, argparse requires that a command name is specified

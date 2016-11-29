@@ -37,6 +37,12 @@ def command(*args, **kwargs):
     def decorator(f):
         if 'description' not in kwargs:
             kwargs['description'] = f.__doc__
+        if 'parents' in kwargs:
+            if not hasattr(f, '_argnames'):  # pragma: no cover
+                f._argnames = []
+            for p in kwargs['parents']:
+                f._argnames += p._argnames if hasattr(p, '_argnames') else []
+            kwargs['parents'] = [p.parser for p in kwargs['parents']]
         f.parser = argparse.ArgumentParser(*args, **kwargs)
         f.climax = True
         for arg in getattr(f, '_arguments', []):
@@ -52,6 +58,16 @@ def command(*args, **kwargs):
     return decorator
 
 
+def parent(*args, **kwargs):
+    """Decorator to define a parent command.
+
+    This decorator provides a way to distinguish commands intended to be
+    used as parents, and automatically removes help arguments.
+    """
+    kwargs['add_help'] = False
+    return command(*args, **kwargs)
+
+
 def _subcommand(group, *args, **kwargs):
     """Decorator to define a subcommand.
 
@@ -64,6 +80,12 @@ def _subcommand(group, *args, **kwargs):
         if 'parser' in kwargs:
             # use a copy of the given parser
             group._subparsers._parser_class = _CopiedArgumentParser
+        if 'parents' in kwargs:
+            if not hasattr(f, '_argnames'):  # pragma: no cover
+                f._argnames = []
+            for p in kwargs['parents']:
+                f._argnames += p._argnames if hasattr(p, '_argnames') else []
+            kwargs['parents'] = [p.parser for p in kwargs['parents']]
         if args == ():
             f.parser = group._subparsers.add_parser(f.__name__, **kwargs)
         else:
@@ -84,6 +106,12 @@ def _subgroup(group, *args, **kwargs):
     """
     def decorator(f):
         f.required = kwargs.pop('required', True)
+        if 'parents' in kwargs:
+            if not hasattr(f, '_argnames'):  # pragma: no cover
+                f._argnames = []
+            for p in kwargs['parents']:
+                f._argnames += p._argnames if hasattr(p, '_argnames') else []
+            kwargs['parents'] = [p.parser for p in kwargs['parents']]
         if 'help' not in kwargs:
             kwargs['help'] = f.__doc__
         if args == ():
@@ -111,6 +139,12 @@ def group(*args, **kwargs):
     """
     def decorator(f):
         f.required = kwargs.pop('required', True)
+        if 'parents' in kwargs:
+            if not hasattr(f, '_argnames'):  # pragma: no cover
+                f._argnames = []
+            for p in kwargs['parents']:
+                f._argnames += p._argnames if hasattr(p, '_argnames') else []
+            kwargs['parents'] = [p.parser for p in kwargs['parents']]
         f.parser = argparse.ArgumentParser(*args, **kwargs)
         f.climax = True
         for arg in getattr(f, '_arguments', []):
@@ -209,9 +243,9 @@ argparse.html#the-add-argument-method>`_
     method.
     """
     def decorator(f):
-        if getattr(f, '_arguments', None) is None:
+        if not hasattr(f, '_arguments'):
             f._arguments = []
-        if getattr(f, '_argnames', None) is None:
+        if not hasattr(f, '_argnames'):
             f._argnames = []
         f._arguments.append((args, kwargs))
         f._argnames.append(_get_dest(*args, **kwargs))
