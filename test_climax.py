@@ -94,6 +94,42 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stdout.getvalue(), 'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
+    def test_command_with_parent_parsers(self):
+        @climax.command(add_help=False)
+        @climax.argument('--repeat', type=int)
+        def parent(repeat):
+            return {"repeat": repeat}
+
+        @climax.command(parents=[parent])
+        @climax.argument('--name')
+        def cmd(name, parent):
+            for i in range(parent['repeat']):
+                print(name)
+
+        cmd(['--repeat', '3', '--name', 'foo'])
+        self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
+        self.assertEqual(self.stderr.getvalue(), '')
+
+    def test_subommand_with_parent_parsers(self):
+        @climax.command(add_help=False)
+        @climax.argument('--repeat', type=int)
+        def parent(repeat):
+            return {"repeat": repeat}
+
+        @climax.group()
+        def grp():
+            pass
+
+        @grp.command(parents=[parent])
+        @climax.argument('--name')
+        def cmd(name, parent):
+            for i in range(parent['repeat']):
+                print(name)
+
+        grp(['cmd', '--repeat', '3', '--name', 'foo'])
+        self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
+        self.assertEqual(self.stderr.getvalue(), '')
+
     def test_group(self):
         @climax.group()
         @climax.argument('--foo', type=int)
