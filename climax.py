@@ -103,6 +103,16 @@ def command(*args, **kwargs):
     return decorator
 
 
+def parent(*args, **kwargs):
+    """Decorator to define a parent command.
+
+    This decorator provides a way to distinguish commands intended to be
+    used as parents, and automatically removes help arguments.
+    """
+    kwargs['add_help'] = False
+    return command(*args, **kwargs)
+
+
 def _subcommand(group, *args, **kwargs):
     """Decorator to define a subcommand.
 
