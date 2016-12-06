@@ -2,6 +2,7 @@ import argparse
 from functools import wraps
 from functools import partial
 import getpass
+from gettext import gettext as _
 
 
 class _CopiedArgumentParser(argparse.ArgumentParser):
@@ -161,6 +162,44 @@ def group(*args, **kwargs):
     return decorator
 
 
+def _get_dest(*args, **kwargs):
+    """
+    Duplicate argument names processing logic from argparse.
+
+    argparse stores the variable in the namespace using the provided dest name,
+    the first long option string, or the first short option string
+
+    """
+    prefix_chars = kwargs.get('prefix_chars', '-')
+    # determine short and long option strings
+    option_strings = []
+    long_option_strings = []
+
+    for option_string in args:
+        # strings starting with two prefix characters are long options
+        option_strings.append(option_string)
+        if option_string[0] in prefix_chars:
+            if len(option_string) > 1:
+                if option_string[1] in prefix_chars:
+                    long_option_strings.append(option_string)
+
+    # infer destination, '--foo-bar' -> 'foo_bar' and '-x' -> 'x'
+    dest = kwargs.get('dest', None)
+    if dest is None:
+        if long_option_strings:
+            dest_option_string = long_option_strings[0]
+        else:
+            dest_option_string = option_strings[0]
+        dest = dest_option_string.lstrip(prefix_chars)
+        if not dest:
+            msg = _('dest= is required for options like %r')
+            raise ValueError(msg % option_string)
+        dest = dest.replace('-', '_')
+
+    # return the updated dest name
+    return dest
+
+
 def argument(*args, **kwargs):
     """Decorator to define an argparse option or argument.
 
@@ -175,11 +214,7 @@ argparse.html#the-add-argument-method>`_
         if getattr(f, '_argnames', None) is None:
             f._argnames = []
         f._arguments.append((args, kwargs))
-        for argname in args:
-            if argname.startswith('--'):
-                f._argnames.append(argname[2:])
-            else:
-                f._argnames.append(argname)
+        f._argnames.append(_get_dest(*args, **kwargs))
         return f
     return decorator
 

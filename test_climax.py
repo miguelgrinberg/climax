@@ -66,12 +66,32 @@ class TestClips(unittest.TestCase):
         @climax.command(description='foo')
         @climax.option('--repeat', type=int)
         @climax.argument('name')
-        def cmd(repeat, name):
+        @climax.argument('--long-name')
+        @climax.argument('--other-name', dest='third_name')
+        def cmd(repeat, name, long_name, third_name):
             for i in range(repeat):
-                print(name)
+                print(name, long_name, third_name)
 
-        cmd(['--repeat', '3', 'foo'])
-        self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
+        cmd(['--repeat', '3', 'foo', '--long-name', 'foobaz', '--other-name', 'baz'])
+        self.assertEqual(self.stdout.getvalue(), 'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
+        self.assertEqual(self.stderr.getvalue(), '')
+
+    def test_subcommand_with_arguments(self):
+        @climax.group()
+        def grp():
+            pass
+
+        @grp.command()
+        @climax.option('--repeat', type=int)
+        @climax.argument('name')
+        @climax.argument('--long-name')
+        @climax.argument('--other-name', dest='third_name')
+        def cmd(repeat, name, long_name, third_name):
+            for i in range(repeat):
+                print(name, long_name, third_name)
+
+        grp(['cmd', '--repeat', '3', 'foo', '--long-name', 'foobaz', '--other-name', 'baz'])
+        self.assertEqual(self.stdout.getvalue(), 'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
     def test_group(self):
