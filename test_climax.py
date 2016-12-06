@@ -95,7 +95,7 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stderr.getvalue(), '')
 
     def test_command_with_parent_parsers(self):
-        @climax.command(add_help=False)
+        @climax.parent()
         @climax.argument('--repeat', type=int)
         def parent(repeat):
             return {"repeat": repeat}
@@ -111,7 +111,7 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stderr.getvalue(), '')
 
     def test_subommand_with_parent_parsers(self):
-        @climax.command(add_help=False)
+        @climax.parent()
         @climax.argument('--repeat', type=int)
         def parent(repeat):
             return {"repeat": repeat}
@@ -126,8 +126,20 @@ class TestClips(unittest.TestCase):
             for i in range(parent['repeat']):
                 print(name)
 
+        @grp.command(parents=[parent])
+        def cmd2(parent):
+            for i in range(parent['repeat']):
+                print("baz")
+
         grp(['cmd', '--repeat', '3', '--name', 'foo'])
         self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
+        self.assertEqual(self.stderr.getvalue(), '')
+
+        self._reset_stdout()
+        self._reset_stderr()
+
+        grp(['cmd2', '--repeat', '3'])
+        self.assertEqual(self.stdout.getvalue(), 'baz\nbaz\nbaz\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
     def test_group(self):
@@ -207,6 +219,25 @@ class TestClips(unittest.TestCase):
 
         self.assertRaises(TypeError, grp, ['--foo', '123', 'cmd3', '--repeat',
                                            '3', 'foo'])
+    def test_group_with_parent_parsers(self):
+        @climax.parent()
+        @climax.argument('--repeat', type=int)
+        def parent(repeat):
+            return {"repeat": repeat}
+
+        @climax.group(parents=[parent])
+        def grp(parent):
+            return {'repeat': parent['repeat']}
+
+        @grp.command()
+        @climax.argument('--name')
+        def cmd(name, repeat):
+            for i in range(repeat):
+                print(name)
+
+        grp(['--repeat', '3', 'cmd', '--name', 'foo'])
+        self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
+        self.assertEqual(self.stderr.getvalue(), '')
 
     def test_multilevel_groups(self):
         @climax.group()
@@ -286,6 +317,30 @@ class TestClips(unittest.TestCase):
         self.assertRaises(SystemExit, main, ['cmdtwo', 'cmd2b', '--baz'])
         self.assertEqual(self.stdout.getvalue(), '')
         self.assertIn('unrecognized arguments: --baz', self.stderr.getvalue())
+
+    def test_multilevel_groups_with_parent_parsers(self):
+        @climax.parent()
+        @climax.argument('--repeat', type=int)
+        def parent(repeat):
+            return {"repeat": repeat}
+
+        @climax.group()
+        def grp():
+            pass
+
+        @grp.group(parents=[parent])
+        def subgrp(parent):
+            return {'repeat': parent['repeat']}
+
+        @subgrp.command()
+        @climax.argument('--name')
+        def cmd(name, repeat):
+            for i in range(repeat):
+                print(name)
+
+        grp(['subgrp', '--repeat', '3', 'cmd', '--name', 'foo'])
+        self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
+        self.assertEqual(self.stderr.getvalue(), '')
 
     @unittest.skipIf(sys.version_info < (3, 3), 'only supported in Python 3.3+')
     def test_group_with_no_subcommand(self):
