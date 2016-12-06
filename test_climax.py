@@ -63,7 +63,7 @@ class TestClips(unittest.TestCase):
         self.assertEqual(result, 123)
 
     def test_command_with_arguments(self):
-        @climax.command()
+        @climax.command(description='foo')
         @climax.option('--repeat', type=int)
         @climax.argument('name')
         def cmd(repeat, name):
@@ -80,7 +80,7 @@ class TestClips(unittest.TestCase):
         def grp(foo):
             print(foo)
 
-        @grp.command()
+        @grp.command(help='cmd help')
         @climax.option('--repeat', type=int)
         @climax.argument('name')
         def cmd1(repeat, name):
@@ -162,7 +162,7 @@ class TestClips(unittest.TestCase):
         def cmd1(main):
             print('cmd1', main)
 
-        @main.group('cmdtwo')
+        @main.group('cmdtwo', help='group help')
         @climax.argument('--foo', action='store_true')
         def cmd2(foo, main):
             print('cmd2', foo, main)
