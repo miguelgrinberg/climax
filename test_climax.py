@@ -14,7 +14,7 @@ import sys
 
 import coverage
 
-cov = coverage.coverage()
+cov = coverage.coverage(branch=True)
 cov.start()
 
 import climax
@@ -28,7 +28,7 @@ class TestClips(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cov.stop()
-        cov.report(include='climax.py')
+        cov.report(include='climax.py', show_missing=True)
 
     def setUp(self):
         self.stdout_patcher = mock.patch('argparse._sys.stdout',
