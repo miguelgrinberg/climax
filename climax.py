@@ -56,6 +56,24 @@ def _get_args(f, parsed_args):
     return filtered_args, remainder_args
 
 
+def _process_parents(f, parents):
+    """
+    Attach parents to the command or group and append raw parser
+    arguments to the command's argnames
+
+    """
+    f.parents = _get_climax_parents(parents)
+    # allow passing climax commands instead of ArgumentParser
+    parent_parsers = _get_parent_parsers(parents)
+    if getattr(f, '_argnames', None) is None:
+        f._argnames = []
+    f._argnames += [action.dest
+                    for parent_parser in parent_parsers
+                    for action in parent_parser._actions
+                    if parent_parser not in {fp.parser for fp in f.parents}]
+    return parent_parsers
+
+
 def _get_parents_context(f, parsed_args):
     """
     Call climax parent commands and return a dict of contexts
@@ -126,15 +144,7 @@ def _subcommand(group, *args, **kwargs):
             # use a copy of the given parser
             group._subparsers._parser_class = _CopiedArgumentParser
         if 'parents' in kwargs:
-            f.parents = _get_climax_parents(kwargs['parents'])
-            # allow passing climax commands instead of ArgumentParser
-            kwargs['parents'] = _get_parent_parsers(kwargs['parents'])
-            if getattr(f, '_argnames', None) is None:
-                f._argnames = []
-            f._argnames += [action.dest
-                            for parent_parser in kwargs['parents']
-                            for action in parent_parser._actions
-                            if parent_parser not in {fp.parser for fp in f.parents}]
+            kwargs['parents'] = _process_parents(f, kwargs['parents'])
         if args == ():
             f.parser = group._subparsers.add_parser(f.__name__, **kwargs)
         else:
@@ -156,15 +166,7 @@ def _subgroup(group, *args, **kwargs):
     def decorator(f):
         f.required = kwargs.pop('required', True)
         if 'parents' in kwargs:
-            f.parents = _get_climax_parents(kwargs['parents'])
-            # allow passing climax commands instead of ArgumentParser
-            kwargs['parents'] = _get_parent_parsers(kwargs['parents'])
-            if getattr(f, '_argnames', None) is None:
-                f._argnames = []
-            f._argnames += [action.dest
-                            for parent_parser in kwargs['parents']
-                            for action in parent_parser._actions
-                            if parent_parser not in {fp.parser for fp in f.parents}]
+            kwargs['parents'] = _process_parents(f, kwargs['parents'])
         if 'help' not in kwargs:
             kwargs['help'] = f.__doc__
         if args == ():
@@ -193,15 +195,7 @@ def group(*args, **kwargs):
     def decorator(f):
         f.required = kwargs.pop('required', True)
         if 'parents' in kwargs:
-            f.parents = _get_climax_parents(kwargs['parents'])
-            # allow passing climax commands instead of ArgumentParser
-            kwargs['parents'] = _get_parent_parsers(kwargs['parents'])
-            if getattr(f, '_argnames', None) is None:
-                f._argnames = []
-            f._argnames += [action.dest
-                            for parent_parser in kwargs['parents']
-                            for action in parent_parser._actions
-                            if parent_parser not in {fp.parser for fp in f.parents}]
+            kwargs['parents'] = _process_parents(f, kwargs['parents'])
         f.parser = argparse.ArgumentParser(*args, **kwargs)
         f.climax = True
         for arg in getattr(f, '_arguments', []):

@@ -110,7 +110,7 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
-    def test_subommand_with_parent_parsers(self):
+    def test_subcommand_with_parent_parsers(self):
         @climax.parent()
         @climax.argument('--repeat', type=int)
         def parent(repeat):
