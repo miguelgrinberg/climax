@@ -162,7 +162,7 @@ def group(*args, **kwargs):
     return decorator
 
 
-def _get_dest(*args, **kwargs):
+def _get_dest(*args, **kwargs):  # pragma: no cover
     """
     Duplicate argument names processing logic from argparse.
 
