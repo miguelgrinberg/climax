@@ -26,6 +26,67 @@ class PasswordPrompt(argparse.Action):
         setattr(namespace, self.dest, getpass.getpass())
 
 
+def _get_parent_parsers(parents):
+    """
+    Return ArgumentParser instances from list of climax
+    commands or ArgumentParser instances
+
+    """
+    return [f.parser if hasattr(f, 'parser') else f for f in parents]
+
+
+def _get_climax_parents(parents):
+    """
+    Return list of climax commands
+
+    """
+    return [f for f in parents if hasattr(f, 'parser')]
+
+
+def _get_args(f, parsed_args):
+    """
+    Return arguments that apply to f and remainder arguments that don't
+
+    """
+    filtered_args = {arg: parsed_args[arg]
+                     for arg in parsed_args.keys()
+                     if arg in getattr(f, '_argnames', [])}
+    remainder_args = {arg: parsed_args[arg] for arg in parsed_args.keys()
+                   if arg not in filtered_args}
+    return filtered_args, remainder_args
+
+
+def _process_parents(f, parents):
+    """
+    Attach parents to the command or group and append raw parser
+    arguments to the command's argnames
+
+    """
+    f.parents = _get_climax_parents(parents)
+    # allow passing climax commands instead of ArgumentParser
+    parent_parsers = _get_parent_parsers(parents)
+    if getattr(f, '_argnames', None) is None:
+        f._argnames = []
+    f._argnames += [action.dest
+                    for parent_parser in parent_parsers
+                    for action in parent_parser._actions
+                    if parent_parser not in {fp.parser for fp in f.parents}]
+    return parent_parsers
+
+
+def _get_parents_context(f, parsed_args):
+    """
+    Call climax parent commands and return a dict of contexts
+
+    """
+    ctx = {}
+    if hasattr(f, 'parents'):
+        for parent in f.parents:
+            filtered_args, parsed_args = _get_args(parent, parsed_args)
+            ctx[parent.__name__] = parent(filtered_args)
+    return {k: v for k, v in ctx.items() if v is not None}
+
+
 def command(*args, **kwargs):
     """Decorator to define a command.
 
@@ -37,19 +98,37 @@ def command(*args, **kwargs):
     def decorator(f):
         if 'description' not in kwargs:
             kwargs['description'] = f.__doc__
+        if 'parents' in kwargs:
+            f.parents = _get_climax_parents(kwargs['parents'])
+            # allows passing climax commands instead of ArgumentParser
+            kwargs['parents'] = _get_parent_parsers(kwargs['parents'])
         f.parser = argparse.ArgumentParser(*args, **kwargs)
         f.climax = True
+
         for arg in getattr(f, '_arguments', []):
             f.parser.add_argument(*arg[0], **arg[1])
 
         @wraps(f)
         def wrapper(args=None):
-            kwargs = f.parser.parse_args(args)
-            return f(**vars(kwargs))
+            parsed_args = args if isinstance(args, dict) else vars(f.parser.parse_args(args))
+            filtered_args, parsed_args = _get_args(f, parsed_args)
+            parent_ctx = _get_parents_context(f, parsed_args)
+            filtered_args.update(parent_ctx)
+            return f(**filtered_args)
 
         wrapper.func = f
         return wrapper
     return decorator
+
+
+def parent(*args, **kwargs):
+    """Decorator to define a parent command.
+
+    This decorator provides a way to distinguish commands intended to be
+    used as parents, and automatically removes help arguments.
+    """
+    kwargs['add_help'] = False
+    return command(*args, **kwargs)
 
 
 def _subcommand(group, *args, **kwargs):
@@ -64,6 +143,8 @@ def _subcommand(group, *args, **kwargs):
         if 'parser' in kwargs:
             # use a copy of the given parser
             group._subparsers._parser_class = _CopiedArgumentParser
+        if 'parents' in kwargs:
+            kwargs['parents'] = _process_parents(f, kwargs['parents'])
         if args == ():
             f.parser = group._subparsers.add_parser(f.__name__, **kwargs)
         else:
@@ -84,6 +165,8 @@ def _subgroup(group, *args, **kwargs):
     """
     def decorator(f):
         f.required = kwargs.pop('required', True)
+        if 'parents' in kwargs:
+            kwargs['parents'] = _process_parents(f, kwargs['parents'])
         if 'help' not in kwargs:
             kwargs['help'] = f.__doc__
         if args == ():
@@ -111,6 +194,8 @@ def group(*args, **kwargs):
     """
     def decorator(f):
         f.required = kwargs.pop('required', True)
+        if 'parents' in kwargs:
+            kwargs['parents'] = _process_parents(f, kwargs['parents'])
         f.parser = argparse.ArgumentParser(*args, **kwargs)
         f.climax = True
         for arg in getattr(f, '_arguments', []):
@@ -132,32 +217,27 @@ def group(*args, **kwargs):
                 f.parser.error('too few arguments')
 
             # call the group function
-            filtered_args = {arg: parsed_args[arg]
-                             for arg in parsed_args.keys()
-                             if arg in getattr(f, '_argnames', [])}
-            parsed_args = {arg: parsed_args[arg] for arg in parsed_args.keys()
-                           if arg not in filtered_args}
-            ctx = f(**filtered_args)
+            filtered_args, parsed_args = _get_args(f, parsed_args)
+            parent_ctx = _get_parents_context(f, parsed_args)
+            filtered_args.update(parent_ctx or {})
+            group_ctx = f(**filtered_args)
 
             # call the sub-command function (or chain)
             func = f
             while '_func_' + func.__name__ in parsed_args:
                 func = parsed_args.pop('_func_' + func.__name__)
                 if getattr(func, 'climax', False):
-                    filtered_args = {arg: parsed_args[arg]
-                                     for arg in parsed_args.keys()
-                                     if arg in getattr(func, '_argnames', [])}
-                    parsed_args = {arg: parsed_args[arg]
-                                   for arg in parsed_args.keys()
-                                   if arg not in filtered_args}
+                    filtered_args, parsed_args = _get_args(func, parsed_args)
                 else:
                     # we don't have our metadata for this subparser, so we
                     # send all remaining args to it
                     filtered_args = parsed_args
                     parsed_args = {}
-                filtered_args.update(ctx or {})
-                ctx = func(**filtered_args)
-            return ctx
+                parent_ctx = _get_parents_context(func, parsed_args)
+                filtered_args.update(group_ctx or {})
+                filtered_args.update(parent_ctx)
+                group_ctx = func(**filtered_args)
+            return group_ctx
         return wrapper
     return decorator
 
