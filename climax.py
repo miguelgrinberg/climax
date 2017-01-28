@@ -1,4 +1,5 @@
 import argparse
+from argparse import REMAINDER
 from functools import wraps
 from functools import partial
 import getpass
@@ -158,7 +159,7 @@ def group(*args, **kwargs):
             parsed_args = vars(f.parser.parse_args(args))
 
             # in Python 3.3+, sub-commands are optional by default
-            # so required parsers need to be validated by hand here by
+            # so required parsers need to be validated by hand here
             func = f
             while '_func_' + func.__name__ in parsed_args:
                 func = parsed_args.get('_func_' + func.__name__)
@@ -254,7 +255,7 @@ argparse.html#the-add-argument-method>`_
 
 
 def option(*args, **kwargs):
-    """Decorator define an argparse option or argument.
+    """Decorator to define an argparse option or argument.
 
     Functionally equivalent to the ``argument`` decorator.
     """

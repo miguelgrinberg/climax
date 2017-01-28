@@ -20,18 +20,20 @@ Climax is installed with pip:
 
 The following example should give you a pretty good idea of how climax works:
 
-    import climax
+```python
+import climax
 
-    @climax.command()
-    @climax.argument('--count', type=int, help='how many times to repeat')
-    @climax.argument('name', help='the name to repeat')
-    def repeat(count, name):
-        """This silly program repeats a name the given number of times."""
-        for i in range(count):
-            print(name)
+@climax.command()
+@climax.argument('name', help='the name to repeat')
+@climax.argument('--count', type=int, help='how many times to repeat')
+def repeat(count, name):
+    """This silly program repeats a name the given number of times."""
+    for i in range(count):
+        print(name)
 
-    if __name__ == '__main__':
-        repeat()
+if __name__ == '__main__':
+    repeat()
+```
 
 In the script above, the arguments to the `@climax.argument` decorator are
 anything you would send to the `ArgumentParser.add_argument` method. In
@@ -260,7 +262,7 @@ With climax, the parent feature is available through a `parent` decorator:
         main()
 
 In this example, both the `foo` and `bar` commands accept `--count` as
-argument. The function that handles a command that has parents will receive 
+argument. The function that handles a command that has parents will receive
 its own arguments combined with those of the parents.
 
 ### Optional Commands
@@ -352,4 +354,4 @@ returns a fully built and ready to use parser.
 
 Sorry to dissappoint you, but you now know everthing there is to know about
 climax. The goal of this project is to be simple and lightweight, there are
-no advanced features. :) 
+no advanced features. :)
