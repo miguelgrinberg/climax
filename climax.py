@@ -38,14 +38,20 @@ def command(*args, **kwargs):
     def decorator(f):
         if 'description' not in kwargs:
             kwargs['description'] = f.__doc__
+
         if 'parents' in kwargs:
             if not hasattr(f, '_argnames'):  # pragma: no cover
                 f._argnames = []
             for p in kwargs['parents']:
                 f._argnames += p._argnames if hasattr(p, '_argnames') else []
             kwargs['parents'] = [p.parser for p in kwargs['parents']]
-        f.parser = argparse.ArgumentParser(*args, **kwargs)
-        f.climax = True
+
+        if 'parser' not in kwargs:
+            f.parser = argparse.ArgumentParser(*args, **kwargs)
+        else:
+            f.parser = kwargs['parser']
+        f.climax = 'parser' not in kwargs
+
         for arg in getattr(f, '_arguments', []):
             f.parser.add_argument(*arg[0], **arg[1])
 

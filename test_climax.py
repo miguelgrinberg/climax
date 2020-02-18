@@ -141,6 +141,25 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stderr.getvalue(), '')
         self.assertEqual(result, 123)
 
+    def test_command_with_external_argparse(self):
+        parser = argparse.ArgumentParser('cmd.py')
+        parser.add_argument('--repeat', type=int)
+        parser.add_argument('name')
+
+        @climax.command(parser=parser)
+        @climax.argument('--foo', type=int)
+        def cmd(repeat, name, foo):
+            print(name)
+            print('foo')
+            print(foo)
+            return repeat
+
+        result = cmd(['--repeat', '132', 'newname', '--foo', '912'])
+
+        self.assertEqual(self.stdout.getvalue(), 'newname\nfoo\n912\n')
+        self.assertEqual(self.stderr.getvalue(), '')
+        self.assertEqual(result, 132)
+
     def test_group_with_external_argparse(self):
         @climax.group()
         @climax.argument('--foo', type=int)
