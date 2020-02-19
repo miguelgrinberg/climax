@@ -8,7 +8,7 @@ from setuptools import setup
 
 setup(
     name='climax',
-    version='0.3.1',
+    version='0.3.2',
     url='http://github.com/miguelgrinberg/climax/',
     license='MIT',
     author='Miguel Grinberg',
