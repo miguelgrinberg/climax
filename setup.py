@@ -15,6 +15,7 @@ setup(
     author_email='miguelgrinberg50@gmail.com',
     description='Decorator based argparse wrapper inspired by click',
     long_description=__doc__,
+    long_description_content_type='text/markdown',
     py_modules=['climax'],
     zip_safe=False,
     include_package_data=True,
