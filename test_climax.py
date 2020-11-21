@@ -14,10 +14,10 @@ import sys
 
 import coverage
 
-cov = coverage.coverage(branch=True)
+cov = coverage.coverage(branch=True, source=['climax'])
 cov.start()
 
-import climax
+import climax  # noqa: E402
 
 
 class TestClips(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestClips(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         cov.stop()
-        cov.report(include='climax.py', show_missing=True)
+        cov.report(show_missing=True)
 
     def setUp(self):
         self.stdout_patcher = mock.patch('argparse._sys.stdout',
@@ -72,8 +72,10 @@ class TestClips(unittest.TestCase):
             for i in range(repeat):
                 print(name, long_name, third_name)
 
-        cmd(['--repeat', '3', 'foo', '--long-name', 'foobaz', '--other-name', 'baz'])
-        self.assertEqual(self.stdout.getvalue(), 'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
+        cmd(['--repeat', '3', 'foo', '--long-name', 'foobaz', '--other-name',
+             'baz'])
+        self.assertEqual(self.stdout.getvalue(),
+                         'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
     def test_subcommand_with_arguments(self):
@@ -90,8 +92,10 @@ class TestClips(unittest.TestCase):
             for i in range(repeat):
                 print(name, long_name, third_name)
 
-        grp(['cmd', '--repeat', '3', 'foo', '--long-name', 'foobaz', '--other-name', 'baz'])
-        self.assertEqual(self.stdout.getvalue(), 'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
+        grp(['cmd', '--repeat', '3', 'foo', '--long-name', 'foobaz',
+             '--other-name', 'baz'])
+        self.assertEqual(self.stdout.getvalue(),
+                         'foo foobaz baz\nfoo foobaz baz\nfoo foobaz baz\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
     def test_command_with_parent_parsers(self):
@@ -362,7 +366,8 @@ class TestClips(unittest.TestCase):
         self.assertEqual(self.stdout.getvalue(), 'foo\nfoo\nfoo\n')
         self.assertEqual(self.stderr.getvalue(), '')
 
-    @unittest.skipIf(sys.version_info < (3, 3), 'only supported in Python 3.3+')
+    @unittest.skipIf(sys.version_info < (3, 3),
+                     'only supported in Python 3.3+')
     def test_group_with_no_subcommand(self):
         @climax.group(required=False)
         @climax.argument('--foo', type=int)

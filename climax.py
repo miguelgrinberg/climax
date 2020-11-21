@@ -1,5 +1,4 @@
 import argparse
-from argparse import REMAINDER
 from functools import wraps
 from functools import partial
 import getpass

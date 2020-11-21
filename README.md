@@ -1,6 +1,6 @@
 # climax
 
-[![Build Status](https://travis-ci.org/miguelgrinberg/climax.svg?branch=master)](https://travis-ci.org/miguelgrinberg/climax)
+[![Build status](https://github.com/miguelgrinberg/climax/workflows/build/badge.svg)](https://github.com/miguelgrinberg/climax/actions) [![codecov](https://codecov.io/gh/miguelgrinberg/climax/branch/master/graph/badge.svg)](https://codecov.io/gh/miguelgrinberg/climax)
 
 A lightweight argparse wrapper inspired by click.
 
