@@ -1,5 +1,12 @@
 # climax change log
 
+**Release 0.5.0** - 2021-07-09
+
+- Dropped support for Python 2.x
+- Documentation ([commit](https://github.com/miguelgrinberg/climax/commit/80dc8d23e4c200b1ff4fa58d8c9983d0c5ebb4a0))
+- Improved project structure ([commit](https://github.com/miguelgrinberg/climax/commit/2d8427847dad0fe20dcac5aa99e0a5fcb8ea2ce0))
+- Move builds to GitHub actions ([commit](https://github.com/miguelgrinberg/climax/commit/64632b4c5b058d9e127913573cf10e2f08f01e6b))
+
 **Release 0.4.0** - 2020-02-19
 
 - Fixed setup.py long description ([commit](https://github.com/miguelgrinberg/climax/commit/8fa9f4fb1f992a4f498d3a291aad2318bf17ef42))
