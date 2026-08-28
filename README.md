@@ -1,6 +1,6 @@
 # climax
 
-[![Build status](https://github.com/miguelgrinberg/climax/workflows/build/badge.svg)](https://github.com/miguelgrinberg/climax/actions) [![codecov](https://codecov.io/gh/miguelgrinberg/climax/branch/main/graph/badge.svg)](https://codecov.io/gh/miguelgrinberg/climax)
+[![tests](https://code.miguelgrinberg.com/miguelgrinberg/climax/badges/workflows/tests.yml/badge.svg)](https://code.miguelgrinberg.com/miguelgrinberg/climax/actions)
 
 A lightweight argparse wrapper inspired by click.
 
@@ -12,6 +12,22 @@ based solutions.
 
 ## Resources
 
-- [Documentation](http://climax.readthedocs.io/en/latest/)
+- [git](https://code.miguelgrinberg.com/miguelgrinberg/climax)
+- [Change Log](https://code.miguelgrinberg.com/miguelgrinberg/climax/src/branch/main/CHANGES.md)
+- [Documentation](https://climax.readthedocs.io/)
 - [PyPI](https://pypi.python.org/pypi/climax)
-- [Change Log](https://github.com/miguelgrinberg/climax/blob/main/CHANGES.md)
+- [Contributor's guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+
+Sponsor this project
+--------------------
+
+This project relies on contributions from its users. If you benefit from it please consider making a single or ongoing monetary contribution in one of the following platforms:
+
+- [Github Sponsors](https://github.com/sponsors/miguelgrinberg)
+- [Patreon](https://patreon.com/miguelgrinberg)
+- [Buy me a Coffee](https://buymeacoffee.com/miguelgrinberg)
+- [thanks.dev](https://thanks.dev/u/gh/miguelgrinberg)
+- [PayPal](https://paypal.me/miguelgrinberg)
+
+Thank you!
